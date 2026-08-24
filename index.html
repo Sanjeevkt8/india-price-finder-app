@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>India Price Finder | Compare Amazon & Flipkart</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .gradient-text {
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .loader {
+            border-top-color: #60a5fa;
+            animation: spinner 1.5s linear infinite;
+        }
+
+        @keyframes spinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .product-card:hover {
+            transform: translateY(-4px);
+            transition: all 0.3s ease;
+            border-color: #60a5fa;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header/Nav -->
+    <nav class="p-6 flex justify-between items-center max-w-7xl mx-auto w-full">
+        <div class="flex items-center gap-2 text-2xl font-bold tracking-tight">
+            <i class="fa-solid fa-magnifying-glass-dollar text-blue-400"></i>
+            <span class="gradient-text">IndiaPriceFinder</span>
+        </div>
+        <div class="hidden md:flex gap-6 text-sm font-medium text-slate-400">
+            <a href="#" class="hover:text-white transition">How it works</a>
+            <a href="#" class="hover:text-white transition">Top Deals</a>
+            <a href="#" class="hover:text-white transition">About</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <main class="flex-grow flex flex-col items-center px-4 pt-12 pb-24">
+        <div class="text-center mb-12 max-w-2xl">
+            <h1 class="text-4xl md:text-6xl font-extrabold mb-4 leading-tight">
+                Find the <span class="text-blue-400">Best Price</span> <br>across India's Top Stores
+            </h1>
+            <p class="text-slate-400 text-lg">
+                Compare real-time prices from Amazon.in and Flipkart instantly. Stop overpaying for your favorite gadgets and gear.
+            </p>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="w-full max-w-3xl relative mb-16">
+            <form id="searchForm" class="relative group">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Search for products (e.g., iPhone 15, Sony WH-1000XM5...)" 
+                    class="w-full px-6 py-5 pl-14 rounded-2xl glass text-white text-lg outline-none focus:ring-2 ring-blue-500 transition-all duration-300 shadow-2xl"
+                    required
+                >
+                <i class="fa-solid fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-xl group-focus-within:text-blue-400 transition-colors"></i>
+                <button 
+                    type="submit" 
+                    class="absolute right-3 top-1/2 -translate-y-1/2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-semibold transition-all active:scale-95 shadow-lg"
+                >
+                    Search
+                </button>
+            </form>
+            <div class="mt-4 flex flex-wrap justify-center gap-2 text-xs text-slate-500">
+                <span>Trending:</span>
+                <button onclick="quickSearch('MacBook Air M2')" class="hover:text-blue-400 underline decoration-slate-700 transition">MacBook Air M2</button>
+                <button onclick="quickSearch('Samsung S24 Ultra')" class="hover:text-blue-400 underline decoration-slate-700 transition">Samsung S24 Ultra</button>
+                <button onclick="quickSearch('Airpods Pro 2')" class="hover:text-blue-400 underline decoration-slate-700 transition">Airpods Pro 2</button>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loader" class="hidden flex flex-col items-center gap-4 mb-12">
+            <div class="loader ease-linear rounded-full border-4 border-t-4 border-slate-700 h-12 w-12"></div>
+            <p class="text-slate-400 animate-pulse">Scraping Amazon and Flipkart...</p>
+        </div>
+
+        <!-- Results Grid -->
+        <div id="resultsGrid" class="w-full max-w-7xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Results will be injected here -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden text-center py-20">
+            <i class="fa-solid fa-box-open text-6xl text-slate-700 mb-4"></i>
+            <h3 class="text-xl font-semibold text-slate-400">No products found. Try a different keyword!</h3>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="p-8 border-t border-slate-800 text-center text-slate-500 text-sm">
+        <p>&copy; 2026 India Price Finder. Simulated scraping for demonstration purposes.</p>
+    </footer>
+
+    <script>
+        const searchForm = document.getElementById('searchForm');
+        const searchInput = document.getElementById('searchInput');
+        const resultsGrid = document.getElementById('resultsGrid');
+        const loader = document.getElementById('loader');
+        const emptyState = document.getElementById('emptyState');
+
+        // Mock data generation to simulate scraping backend
+        const generateMockData = (query) => {
+            const stores = [
+                { name: 'Amazon.in', color: 'text-orange-400', logo: 'fa-amazon' },
+                { name: 'Flipkart', color: 'text-blue-400', logo: 'fa-shopping-cart' }
+            ];
+
+            const products = [];
+            const count = Math.floor(Math.random() * 4) + 3; // 3-6 results
+
+            for (let i = 0; i < count; i++) {
+                const store = stores[Math.floor(Math.random() * stores.length)];
+                const basePrice = Math.floor(Math.random() * 50000) + 1000;
+                
+                products.push({
+                    id: i,
+                    name: `${query} ${['Pro', 'Max', 'Edition', 'Series', 'Standard'][Math.floor(Math.random() * 5)]} ${Math.floor(Math.random() * 100)}`,
+                    price: basePrice,
+                    store: store.name,
+                    storeColor: store.color,
+                    storeIcon: store.logo,
+                    link: `#`
+                });
+            }
+
+            // Sort by price ascending to show lowest first
+            return products.sort((a, b) => a.price - b.price);
+        };
+
+        const renderResults = (products) => {
+            resultsGrid.innerHTML = '';
+            
+            if (products.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+
+            products.forEach(product => {
+                const card = document.createElement('div');
+                card.className = 'product-card glass p-6 rounded-2xl flex flex-col justify-between h-full transition-all duration-300';
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="px-3 py-1 rounded-full text-xs font-bold bg-slate-800 ${product.storeColor} border border-current opacity-80">
+                                <i class="fa-brands ${product.storeIcon} mr-1"></i> ${product.store}
+                            </span>
+                            <span class="text-green-400 text-xs font-bold uppercase">Best Price</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 leading-snug h-14 overflow-hidden line-clamp-2">${product.name}</h3>
+                        <div class="text-3xl font-extrabold mb-6">
+                            ₹${product.price.toLocaleString('en-IN')}
+                        </div>
+                    </div>
+                    <a href="${product.link}" class="block w-full py-3 text-center bg-slate-700 hover:bg-blue-600 text-white rounded-xl font-semibold transition-colors duration-200">
+                        Buy Now <i class="fa-solid fa-arrow-up-right-from-square ml-2 text-xs"></i>
+                    </a>
+                `;
+                resultsGrid.appendChild(card);
+            });
+        };
+
+        const handleSearch = async (e) => {
+            if (e) e.preventDefault();
+            const query = searchInput.value.trim();
+            if (!query) return;
+
+            // UI Reset
+            resultsGrid.innerHTML = '';
+            emptyState.classList.add('hidden');
+            loader.classList.remove('hidden');
+
+            // Simulate network latency for scraping
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            loader.classList.add('hidden');
+            
+            // In a real app, this would be: 
+            // const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+            // const data = await response.json();
+            const data = generateMockData(query);
+            
+            renderResults(data);
+        };
+
+        const quickSearch = (term) => {
+            searchInput.value = term;
+            handleSearch();
+        };
+
+        searchForm.addEventListener('submit', handleSearch);
+    </script>
+</body>
+</html>
