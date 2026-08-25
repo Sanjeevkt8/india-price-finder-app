@@ -99,7 +99,7 @@
         <!-- Loading State -->
         <div id="loader" class="hidden flex flex-col items-center gap-4 mb-12">
             <div class="loader ease-linear rounded-full border-4 border-t-4 border-slate-700 h-12 w-12"></div>
-            <p class="text-slate-400 animate-pulse">Scraping Amazon and Flipkart...</p>
+            <p class="text-slate-400 animate-pulse">Scraping Amazon and Flipkart live...</p>
         </div>
 
         <!-- Results Grid -->
@@ -116,7 +116,7 @@
 
     <!-- Footer -->
     <footer class="p-8 border-t border-slate-800 text-center text-slate-500 text-sm">
-        <p>&copy; 2026 India Price Finder. Simulated scraping for demonstration purposes.</p>
+        <p>&copy; 2026 India Price Finder. Connected to Live Scraping Cloud Backend.</p>
     </footer>
 
     <script>
@@ -126,39 +126,34 @@
         const loader = document.getElementById('loader');
         const emptyState = document.getElementById('emptyState');
 
-        // Mock data generation to simulate scraping backend
-        const generateMockData = (query) => {
-            const stores = [
-                { name: 'Amazon.in', color: 'text-orange-400', logo: 'fa-amazon' },
-                { name: 'Flipkart', color: 'text-blue-400', logo: 'fa-shopping-cart' }
-            ];
+        // Your Live Render URL
+        const BACKEND_URL = "https://onrender.com";
 
-            const products = [];
-            const count = Math.floor(Math.random() * 4) + 3; // 3-6 results
+        const handleSearch = async (query) => {
+            // Show loading animation, hide previous views
+            loader.classList.remove('hidden');
+            resultsGrid.innerHTML = '';
+            emptyState.classList.add('hidden');
 
-            for (let i = 0; i < count; i++) {
-                const store = stores[Math.floor(Math.random() * stores.length)];
-                const basePrice = Math.floor(Math.random() * 50000) + 1000;
+            try {
+                // Call your live FastAPI backend endpoint
+                const response = await fetch(`${BACKEND_URL}/search?query=${encodeURIComponent(query)}`);
+                if (!response.ok) throw new Error('Network error from scraper backend');
                 
-                products.push({
-                    id: i,
-                    name: `${query} ${['Pro', 'Max', 'Edition', 'Series', 'Standard'][Math.floor(Math.random() * 5)]} ${Math.floor(Math.random() * 100)}`,
-                    price: basePrice,
-                    store: store.name,
-                    storeColor: store.color,
-                    storeIcon: store.logo,
-                    link: `#`
-                });
+                const products = await response.json();
+                renderResults(products);
+            } catch (error) {
+                console.error(error);
+                resultsGrid.innerHTML = `<p class="text-red-400 text-center col-span-full">Error fetching prices. Make sure Render is awake and try again.</p>`;
+            } finally {
+                loader.classList.add('hidden');
             }
-
-            // Sort by price ascending to show lowest first
-            return products.sort((a, b) => a.price - b.price);
         };
 
         const renderResults = (products) => {
             resultsGrid.innerHTML = '';
             
-            if (products.length === 0) {
+            if (!products || products.length === 0) {
                 emptyState.classList.remove('hidden');
                 return;
             }
@@ -166,58 +161,40 @@
             emptyState.classList.add('hidden');
 
             products.forEach(product => {
+                const isAmazon = product.store.toLowerCase().includes('amazon');
+                const storeColor = isAmazon ? 'text-orange-400' : 'text-blue-400';
+                const storeIcon = isAmazon ? 'fa-amazon' : 'fa-shopping-cart';
+
                 const card = document.createElement('div');
                 card.className = 'product-card glass p-6 rounded-2xl flex flex-col justify-between h-full transition-all duration-300';
                 card.innerHTML = `
                     <div>
                         <div class="flex justify-between items-start mb-4">
-                            <span class="px-3 py-1 rounded-full text-xs font-bold bg-slate-800 ${product.storeColor} border border-current opacity-80">
-                                <i class="fa-brands ${product.storeIcon} mr-1"></i> ${product.store}
+                            <span class="px-3 py-1 rounded-full text-xs font-bold bg-slate-800 ${storeColor} border border-current opacity-80">
+                                <i class="fa-brands ${storeIcon} mr-1"></i> ${product.store}
                             </span>
-                            <span class="text-green-400 text-xs font-bold uppercase">Best Price</span>
+                            <span class="text-green-400 text-xs font-bold uppercase">Available</span>
                         </div>
-                        <h3 class="text-xl font-bold mb-2 leading-snug h-14 overflow-hidden line-clamp-2">${product.name}</h3>
-                        <div class="text-3xl font-extrabold mb-6">
-                            ₹${product.price.toLocaleString('en-IN')}
-                        </div>
+                        <h3 class="text-lg font-bold mb-2 line-clamp-2 text-slate-100">${product.title || product.name}</h3>
+                        <p class="text-2xl font-black text-white mb-6">₹${Number(product.price).toLocaleString('en-IN')}</p>
                     </div>
-                    <a href="${product.link}" class="block w-full py-3 text-center bg-slate-700 hover:bg-blue-600 text-white rounded-xl font-semibold transition-colors duration-200">
-                        Buy Now <i class="fa-solid fa-arrow-up-right-from-square ml-2 text-xs"></i>
+                    <a href="${product.link || '#'}" target="_blank" class="w-full text-center block bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-medium py-2.5 rounded-xl transition text-sm">
+                        View Product <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-xs text-slate-400"></i>
                     </a>
                 `;
                 resultsGrid.appendChild(card);
             });
         };
 
-        const handleSearch = async (e) => {
-            if (e) e.preventDefault();
-            const query = searchInput.value.trim();
-            if (!query) return;
+        searchForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            handleSearch(searchInput.value.trim());
+        });
 
-            // UI Reset
-            resultsGrid.innerHTML = '';
-            emptyState.classList.add('hidden');
-            loader.classList.remove('hidden');
-
-            // Simulate network latency for scraping
-            await new Promise(resolve => setTimeout(resolve, 1500));
-
-            loader.classList.add('hidden');
-            
-            // In a real app, this would be: 
-            // const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-            // const data = await response.json();
-            const data = generateMockData(query);
-            
-            renderResults(data);
-        };
-
-        const quickSearch = (term) => {
-            searchInput.value = term;
-            handleSearch();
-        };
-
-        searchForm.addEventListener('submit', handleSearch);
+        function quickSearch(keyword) {
+            searchInput.value = keyword;
+            handleSearch(keyword);
+        }
     </script>
 </body>
 </html>
